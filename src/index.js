@@ -60,6 +60,10 @@ class Board extends React.Component {
     }
 }
 
+/**
+ * The Game class that acts as the container 
+ * for all the other classes in this file.
+ */
 class Game extends React.Component {
     constructor(props) {
         super(props);
@@ -67,6 +71,7 @@ class Game extends React.Component {
             history: [{
                 squares: Array(9).fill(null),
             }],
+            stepNumber: 0,
             xIsNext: true,
         };
     }
@@ -77,7 +82,7 @@ class Game extends React.Component {
      * @param {String} i 
      */
     handleClick(i) {
-        const history = this.state.history;
+        const history = this.state.history.slice(0, this.state.stepNumber + 1);
         const current = history[history.length - 1];
         const squares = current.squares.slice();
 
@@ -92,7 +97,19 @@ class Game extends React.Component {
             history: history.concat([{ // concat method doesn't mutate original array
                 squares: squares,
             }]),
+            stepNumber: history.length,
             xIsNext: !this.state.xIsNext,
+        });
+    }
+
+    /**
+     * Jump to a specific state in the history array
+     * @param {Number} step 
+     */
+    jumpTo(step) {
+        this.setState({
+            stepNumber: step,
+            xIsNext: (step % 2) === 0,
         });
     }
 
@@ -102,8 +119,22 @@ class Game extends React.Component {
      */
     render() {
         const history = this.state.history;
-        const current = history[history.length - 1];
+        const current = history[this.state.stepNumber];
         const winner = calculateWinner(current.squares);
+
+        const moves = history.map((step, move) => {
+            const desc = move ?
+                'Go to move #' + move :
+                'Go to game start';
+            
+            return (
+                <li key={move}>
+                    <button onClick={() => this.jumpTo(move)}>{desc}</button>
+                </li>
+            );
+        });
+
+        /* Determine if the game has been won */
         let status;
         if (winner) {
             status = 'Winner: ' + winner;
@@ -118,13 +149,17 @@ class Game extends React.Component {
                 </div>
                 <div className="game-info">
                     <div>{status}</div>
-                    <ol>{/* TODO */}</ol>
+                    <ol>{moves}</ol>
                 </div>
             </div>
         );
     }
 }
 
+/**
+ * Straight up copy and pasted from the tutorial, calculates
+ * who the winner is (if there even is a winner).
+ */
 function calculateWinner(squares) {
     const lines = [
         [0, 1, 2],

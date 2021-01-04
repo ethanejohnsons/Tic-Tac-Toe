@@ -2,6 +2,12 @@ import React from 'react';
 import ReactDOM from 'react-dom'
 import './index.css';
 
+/**
+ * The {@link Square} function used by React. Could've also been a class
+ * like {@link Board} but it was simpler to create a function instead.
+ * @param {*} props the properties array used by react
+ * @see Board
+ */
 function Square(props) {
     return (
         <button className="square" onClick={props.onClick}>
@@ -10,7 +16,15 @@ function Square(props) {
     );
 }
 
+/**
+ * The object definition for the board rendered to the screen.
+ */
 class Board extends React.Component {
+    /**
+     * The basic constructor for a react component. Sets the state to contain
+     * an array of {@link Square} objects and whether or not X is next in a boolean.
+     * @param {*} props the propreties array used by react
+     */
     constructor(props) {
         super(props);
         this.state = {
@@ -19,11 +33,18 @@ class Board extends React.Component {
         }
     }
 
+    /**
+     * Handles whenever the user clicks on a {@link Square}. Also makes a
+     * copy of the square array in order to avoid mutation.
+     * @param {String} i 
+     */
     handleClick(i) {
         const squares = this.state.squares.slice();
         if (calculateWinner(squares) || squares[i]) {
             return;
         }
+        
+        /* Set the square's props.value to X or O. */
         squares[i] = this.state.xIsNext ? 'X' : 'O';
         this.setState({
             squares: squares,
@@ -31,6 +52,10 @@ class Board extends React.Component {
         });
     }
 
+    /**
+     * Render each square to the screen.
+     * @param {Number} i 
+     */
     renderSquare(i) {
         return (
             <Square
@@ -40,6 +65,10 @@ class Board extends React.Component {
         );
     }
 
+    /**
+     * Render the board to the screen. Contains calls to logic such as
+     * calculating the winner and deciding which player goes next.
+     */
     render() {
         const winner = calculateWinner(this.state.squares);
         let status;

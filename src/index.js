@@ -3,20 +3,6 @@ import ReactDOM from 'react-dom'
 import './index.css';
 
 /**
- * The {@link Square} function used by React. Could've also been a class
- * like {@link Board} but it was simpler to create a function instead.
- * @param {*} props the properties array used by react
- * @see Board
- */
-function Square(props) {
-    return (
-        <button className="square" onClick={props.onClick}>
-            {props.value}
-        </button>
-    );
-}
-
-/**
  * The object definition for the board rendered to the screen.
  */
 class Board extends React.Component {
@@ -34,8 +20,7 @@ class Board extends React.Component {
     }
 
     /**
-     * Render the board to the screen. Contains calls to logic such as
-     * calculating the winner and deciding which player goes next.
+     * Render the board to the screen.
      */
     render() {
         return (
@@ -72,14 +57,13 @@ class Game extends React.Component {
                 squares: Array(9).fill(null),
             }],
             stepNumber: 0,
-            xIsNext: true,
         };
     }
 
     /**
      * Handles whenever the user clicks on a {@link Square}. Also makes a
      * copy of the square array in order to avoid mutation.
-     * @param {String} i 
+     * @param {Number} i 
      */
     handleClick(i) {
         const history = this.state.history.slice(0, this.state.stepNumber + 1);
@@ -90,15 +74,30 @@ class Game extends React.Component {
         if (calculateWinner(squares) || squares[i]) {
             return;
         }
-        
-        /* Set the square's value to X or O. */
-        squares[i] = this.state.xIsNext ? 'X' : 'O';
+
+        /* Set the square's value to X */
+        squares[i] = 'X';
         this.setState({
             history: history.concat([{ // concat method doesn't mutate original array
                 squares: squares,
             }]),
             stepNumber: history.length,
-            xIsNext: !this.state.xIsNext,
+        });
+
+        /* Calculate the computer's move */
+        i = calculateNextMove(squares);
+
+        if (calculateWinner(squares) || squares[i]) {
+            return;
+        }
+
+        /* Sets the square's value to O */
+        squares[i] = 'O';
+        this.setState({
+            history: history.concat([{ // concat method doesn't mutate original array
+                squares: squares,
+            }]),
+            stepNumber: history.length,
         });
     }
 
@@ -109,7 +108,7 @@ class Game extends React.Component {
     jumpTo(step) {
         this.setState({
             stepNumber: step,
-            xIsNext: (step % 2) === 0,
+            // xIsNext: (step % 2) === 0,
         });
     }
 
@@ -135,11 +134,9 @@ class Game extends React.Component {
         });
 
         /* Determine if the game has been won */
-        let status;
+        let status = '';
         if (winner) {
             status = 'Winner: ' + winner;
-        } else {
-            status = 'Next player: ' + (this.state.xIsNext ? 'X' : 'O');
         }
     
         return (
@@ -155,6 +152,91 @@ class Game extends React.Component {
         );
     }
 }
+
+/**
+ * The {@link Square} function used by React. Could've also been a class
+ * like {@link Board} but it was simpler to create a function instead.
+ * @param {*} props the properties array used by react
+ * @see Board
+ */
+function Square(props) {
+    return (
+        <button className="square" onClick={props.onClick}>
+            {props.value}
+        </button>
+    );
+}
+
+/**
+ * ARTIFICIAL INTELLIGENCE, MAN!!!
+ * real slo mode
+ * @param {Array} squares 
+ */
+function calculateNextMove(squares) {
+    /* Winning lines */
+    const lines = [
+        [0, 1, 2],
+        [3, 4, 5],
+        [6, 7, 8],
+        [0, 3, 6],
+        [1, 4, 7],
+        [2, 5, 8],
+        [0, 4, 8],
+        [2, 4, 6],
+    ];
+
+    /* Top precedence */
+    for (let i = 0; i < lines.length; i++) {
+        /* Two "in a row" */
+        if (squares[lines[i][0]] == 'O' && squares[lines[i][1]] == 'O' && squares[lines[i][2]] == null) {
+            return lines[i][2];
+        } else if (squares[lines[i][0]] == 'O' && squares[lines[i][1]] == null && squares[lines[i][2]] == 'O') {
+            return lines[i][1];
+        } else if (squares[lines[i][0]] == null && squares[lines[i][1]] == 'O' && squares[lines[i][2]] == 'O') {
+            return lines[i][0];
+        }
+    }
+
+    /* Second precedence */
+    for (let i = 0; i < lines.length; i++) {
+        /* Block the user */
+        if (squares[lines[i][0]] == 'X' && squares[lines[i][1]] == 'X' && squares[lines[i][2]] == null) {
+            return lines[i][2];
+        } else if (squares[lines[i][0]] == 'X' && squares[lines[i][1]] == null && squares[lines[i][2]] == 'X') {
+            return lines[i][1];
+        } else if (squares[lines[i][0]] == null && squares[lines[i][1]] == 'X' && squares[lines[i][2]] == 'X') {
+            return lines[i][0];
+        }
+    }
+
+    /* Third precedence */
+    for (let i = 0; i < lines.length; i++) {
+        /* One next to nothing */
+        if (squares[lines[i][0]] == 'O' && squares[lines[i][1]] == null && squares[lines[i][2]] == null) {
+            return lines[i][2];
+        } else if (squares[lines[i][0]] == null && squares[lines[i][1]] == null && squares[lines[i][2]] == 'O') {
+            return lines[i][0];
+        } else if (squares[lines[i][0]] == null && squares[lines[i][1]] == 'O' && squares[lines[i][2]] == null) {
+            return lines[i][0];
+        }
+    }
+
+    /* Else, just get the next empty space */
+    return getEmptySpace(squares);
+}
+
+/**
+ * Returns the index for an open space on the board.
+ * @param {Array} squares 
+ */
+function getEmptySpace(squares) {
+    for (let i = 0; i < squares.length; i++) {
+        if (squares[i] == null) {
+            return i;
+        }
+    }
+}
+
 
 /**
  * Straight up copy and pasted from the tutorial, calculates
